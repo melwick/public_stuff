@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+</head>
+<body>
+  <div id="ggb" style="width:1000px;height:700px"></div>
+
+  <script>
+    console.log('[INIT] script loaded, readyState =', document.readyState);
+    const _ggbContainer = document.getElementById('ggb');
+    console.log('[INIT] container exists?', !!_ggbContainer, 'size:', _ggbContainer?.clientWidth, 'x', _ggbContainer?.clientHeight);
+
+    // Global error logging to see issues in the console
+    window.addEventListener('error', (e) => {
+      console.error('[ERROR]', e.message, 'at', e.filename + ':' + e.lineno + ':' + e.colno);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('[PROMISE REJECTION]', e.reason);
+    });
+
+    // Applet konfigurieren und einbetten
+    const params = {
+      appName: "geometry",    // "graphing", "3d", ...
+      width: 800, height: 500,
+      showMenuBar: false, showToolBar: true, showAlgebraInput: true,
+      appletOnLoad: function(api) {
+        // Robust on-ready hook (avoids timing issues with ggbOnInit)
+        console.log('[GGB] appletOnLoad fired');
+        console.timeEnd('inject→init');
+        console.log('GeoGebra bereit. Version:', api.getVersion && api.getVersion());
+
+        // Sichtbarkeit & View
+        api.setAxesVisible(true, true);
+        api.setGridVisible(true);
+        api.setCoordSystem(-1, 5, -1, 5);
+
+        // Dreieck einbauen (T1, T2, T3)
+        api.evalCommand('T1=(0,0)');
+        api.evalCommand('T2=(4,0)');
+        api.evalCommand('T3=(2,3)');
+        const triLabel = api.evalCommandGetLabels('Polygon(T1,T2,T3)');
+        console.log('Dreieck erstellt als:', triLabel);
+
+        // Styling des Dreiecks
+        api.setLineThickness(triLabel, 5);
+        api.setFilling(triLabel, 0.2);
+        api.setColor(triLabel, 30, 144, 255);
+        api.setLabelVisible(triLabel, false);
+
+        // Punkte hervorheben
+        ['T1','T2','T3'].forEach(p => {
+          api.setPointSize(p, 7);
+          api.setColor(p, 255, 80, 80);
+        });
+
+        // Beispiel: Basislänge ausgeben
+        console.log('Basis T1–T2 =', api.getValue('Distance(T1,T2)'));
+      }
+    };
+    const app = new GGBApplet(params, /*useBrowserCache*/ false);
+    window.addEventListener('load', () => {
+      console.log('[LOAD] window loaded – injecting applet');
+      console.log('[LOAD] params =', params);
+      console.time('inject→init');
+      app.inject('ggb');
+    });
+
+  </script>
+</body>
+</html>
